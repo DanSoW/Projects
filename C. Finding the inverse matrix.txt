@@ -1,0 +1,446 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <locale.h>
+#include <stdbool.h>
+#include <malloc.h>
+#include <math.h>
+#include <string.h>
+#include <errno.h>
+
+
+#define SIZE_STR 8
+#define SIZE_STR_DOUBLE 23
+
+int getIntValue(bool zero) {
+	size_t length = 0;
+    char *end = NULL;
+    char buf[SIZE_STR] = "";
+ 	int value = 0;	
+ 	bool t = true;
+
+ 	while((fgets(buf, sizeof(buf), stdin)) && (t)){
+    length = strlen(buf);
+    t = false;
+    if (buf[length - 1] == '\n') {
+        buf[--length] = '\0';
+ 
+        errno = 0;
+        value = strtol(buf, &end, 10);
+        
+        if (length == 0) {
+            fprintf(stderr, "\nОшибка: введена пустая строка.\n");
+            t = true;
+        }
+        if (errno != 0 || *end != '\0') {
+            fprintf(stderr, "\nОшибка: введена некорректная строка, число должно быть целочисленным\n");
+            fprintf(stderr, "\t%s\n" , buf);
+            fprintf(stderr, "\t%*c\n", (int)(end - buf) + 1, '^');
+            t = true;
+        }
+    }else {
+        scanf("%*[^\n]");
+        scanf("%*c");
+        fprintf(stderr, "Ошибка: запись числа должна содержать не более %d символов.\n", (SIZE_STR - 2));
+ 
+        t = true;
+    } 
+    
+    if((!t) && ((value <= (int)(-100000)) || (value >= (int)(100000)))){
+    	fprintf(stderr, "Ошибка: вводимое число должно быть в диапазоне (-100000; 100000).\n");
+    	t = true;
+	}
+	
+    if((!t) && (value <= 0) && (!zero)){
+    	printf("\nОшибка: введите число больше 0\n");
+    	t = true;
+	}
+    
+    if(t){
+    	printf("Введите корректное значение: ");
+	}
+	}
+ 	
+    return value;
+}
+
+double getDoubleValue(){
+	setlocale(LC_ALL, "rus");
+	size_t length = 0;
+    char *end = NULL;
+    char buf[SIZE_STR_DOUBLE] = "";
+ 	double value = 0;
+ 	
+ 	bool t = true;
+ 	while((fgets(buf, sizeof(buf), stdin)) && (t)){
+    length = strlen(buf);
+    t = false;
+    if (buf[length - 1] == '\n') {
+        buf[--length] = '\0';
+ 
+        errno = 0;
+        value = strtod(buf, &end);
+        if (length == 0) {
+            fprintf(stderr, "\nОшибка: введена пустая строка.\n");
+            t = true;
+        }
+        if (errno != 0 || *end != '\0') {
+            fprintf(stderr, "\nОшибка: введена некорректная строка\n");
+            fprintf(stderr, "\t%s\n" , buf);
+            fprintf(stderr, "\t%*c\n", (int)(end - buf) + 1, '^');
+            t = true;
+        }
+    }else {
+        scanf("%*[^\n]");
+        scanf("%*c");
+        fprintf(stderr, "Ошибка: запись числа должна содержать не более %d символов\n", (SIZE_STR_DOUBLE - 2));
+ 
+        t = true;
+    } 
+    
+    if((!t) && ((value <= (double)(-100000)) || (value >= (double)(100000)))){
+    	printf("\nОшибка: вводимое число должно быть в диапазоне (-100000; 100000).\n");
+    	t = true;
+	}
+    if(t){
+    	printf("Введите корректное значение: ");
+	}
+	
+	}
+	
+ 
+    return value;
+}
+
+double** createMatrix(int size, bool user, int min, int max) {
+	setlocale(LC_ALL, "rus");
+	if(!user)
+		srand(time(NULL));
+
+	double** matrix = (double**)malloc(size * sizeof(double*));
+	int i = 0;
+	while(i < size) {
+		matrix[i] = (double*)malloc(size * sizeof(double));
+		
+		int j = 0;
+		while(j < size) {
+			if (user) {
+				printf("Введите элемент матрицы [%d ; %d]: ", i, j);
+				matrix[i][j] = getDoubleValue();
+			}
+			else
+				matrix[i][j] = (double)(min + rand() % (max - min));
+			j++;
+		}
+		i++;
+	}
+
+	return matrix;
+}
+
+void showMatrixInConsole(double** matrix, int size, int eps) {
+	if((matrix == NULL) || (size <= 0))
+		return;
+
+	int i = 0;
+	while(i < size) {
+		int j = 0;
+		while(j < size){
+			printf("%.*lf  ", eps,  matrix[i][j]);
+			j++;
+		}
+		printf("\n");
+		i++;
+	}
+	printf("\n");
+
+	return;
+}
+
+void getMatrixMinor(double **mas, double **p, int i, int j, int m) {
+  if(mas == NULL)
+  	return;
+  	
+  int ki = 0, kj = 0, di = 0, dj = 0;
+  di = 0;
+  while(ki < (m-1)) {
+    if (ki == i)
+		di = 1;
+    dj = 0;
+    
+    kj = 0;
+    while(kj < (m-1)) {
+      if (kj == j)
+	  	dj = 1;
+	  	
+      p[ki][kj] = mas[ki + di][kj + dj];
+      kj++;
+    }
+    
+    ki++;
+  }
+}
+
+double Determinant(double **mas, int m) {
+  if(mas == NULL)
+  	return 0;
+  	
+  int i, j, k, n;
+  double d;
+  double **p;
+  p = (double**)malloc(m * sizeof(double*));
+  
+  i = 0;
+  while(i < m){
+    p[i] = (double*)malloc(m * sizeof(double));
+    i++;
+  }
+    
+  j = 0; 
+  d = 0;
+  k = 1;
+  
+  n = (m - 1);
+  
+  if (m == 1) {
+    d = mas[0][0];
+    int del_item = 0;
+  	while(del_item < m){
+    	free(p[del_item]);
+    	del_item++;
+  	}
+  	free(p);
+  	
+    return d;
+  }
+  if (m == 2) {
+    d = mas[0][0] * mas[1][1] - (mas[1][0] * mas[0][1]);
+    int del_item = 0;
+  	while(del_item < m){
+    	free(p[del_item]);
+    	del_item++;
+  	}
+  	free(p);
+  	
+    return(d);
+  }
+  if (m>2) {
+  	i = 0;
+    while(i < m){
+      getMatrixMinor(mas, p, i, 0, m);
+      d = d + k * mas[i][0] * Determinant(p, n);
+      k = -k;
+      i++;
+    }
+  }
+
+  int del_item = 0;
+  while(del_item < m){
+    free(p[del_item]);
+    del_item++;
+  }
+  free(p);
+  	
+  return(d);
+}
+
+double** transportantMatrix(double** mas, int s){
+	if(mas == NULL)
+		return NULL;
+	
+	double** tr = (double**)malloc(s * sizeof(double*));
+	int i = 0;
+	while(i < s){
+		tr[i] = (double*)malloc(s * sizeof(double));
+		int j = 0;
+		while(j < s){
+			tr[i][j] = mas[j][i];
+			j++;
+		}
+		i++;
+	}
+	
+	return tr;
+}
+
+double** unionMatrix(double** mas, int s){
+	if(mas == NULL)
+		return NULL;
+	
+	double** minor = (double**)malloc(s * sizeof(double*)),
+		**unMatrix = (double**)malloc(s * sizeof(double*));
+	int i = 0;
+	while(i < s){
+		minor[i] = (double*)malloc(s * sizeof(double));
+		unMatrix[i] = (double*)malloc(s * sizeof(double));
+		i++;
+	}
+	
+	
+	i = 0;
+	while(i < s){
+		int j = 0;
+		while(j < s){
+			getMatrixMinor(mas, minor, i, j, s);
+			unMatrix[i][j] = pow(-1, (i+j)) * Determinant(minor, (s-1));
+			j++;
+		}
+		i++;
+	}
+	
+	i = 0;
+	while(i < s){
+		free(minor[i]);
+		i++;
+	}
+	free(minor);
+	
+	return unMatrix;
+}
+
+void matrixValueMultiplication(double** matrix, double value, int size){
+	if((matrix == NULL) || (size <= 0))
+		return;
+	int i = 0;
+	while(i < size){
+		int j = 0;
+		while(j < size){
+			matrix[i][j] *= value;
+			j++;
+		}
+		i++;
+	}
+	
+	return;
+}
+
+double** matrixMultiplication(double** matrix1, double** matrix2, int size){
+	if((matrix1 == NULL) || (matrix2 == NULL) || (size <= 0))
+		return NULL;
+	double** mult = (double**)malloc(size * sizeof(double*));
+	int i = 0;
+	while(i < size){
+		mult[i] = (double*)malloc(size * sizeof(double));
+		int j = 0;
+		while(j < size){
+			mult[i][j] = 0;
+			int p = 0;
+			while(p < size){
+				mult[i][j] += matrix1[i][p] * matrix2[p][j];
+				p++;
+			}
+			j++;
+		}
+		i++;
+	}
+	
+	return mult;
+}
+
+int main() {
+	setlocale(LC_ALL, "rus");
+	int size = 0;
+	printf("Введите размер квадратной матрицы: ");
+	while(((size = getIntValue(false)) < 2) || (size > 10)){
+		printf("\nОшибка: размер матрицы не может быть меньше 2 или больше 10\n");
+		printf("Введите корректное значение: ");
+	}
+
+	printf("Как реализовать заполнение матрицы? (0 - рандомное заполнение / 1 - с помощью пользователя): ");
+	int check = 0;
+	{
+		check = getIntValue(true);
+		while ((check > 1) || (check < 0)) {
+      printf("Ошибка: некорректный ответ на вопрос\n");
+			printf("Введите корректный ответ на вопрос (0 или 1): ");
+			check = getIntValue(true);
+		}
+	}
+
+	int eps = 0;
+	
+	if(check){
+		printf("Программа работает с действительными числами. \nВведите количество знаков после запятой\nдля корректного вывода чисел: ");
+		eps = getIntValue(true);
+		while((eps < 0) || (eps > 5)){
+			printf("Ошибка: количество знаков должно быть значением в диапазоне [0; 5]\n");
+			printf("Введите корректное положительное целое значение в диапазоне [0; 5]: ");
+			eps = getIntValue(true);
+		}
+	}
+	
+	int d_min = 0, d_max = 0;
+	if (!check) {
+		while ((d_min == d_max) || (d_max < d_min)) {
+			printf("Введите минимальное и максимальное значение диапазона рандомных чисел\n");
+			printf("Минимальное значение: ");
+			d_min = getIntValue(true);
+			printf("Максимальное значение: ");
+			d_max = getIntValue(true);
+
+			if ((d_min == d_max) || (d_max < d_min))
+				printf("\nОшибка: минимальное значение диапазона рандомных чисел должно быть меньше максимального значения!\n");
+		}
+	}
+
+	double** matrix = createMatrix(size, check, d_min, d_max);
+	double det = Determinant(matrix, size);
+	printf("Исходная матрица: \n");
+	showMatrixInConsole(matrix, size, eps);
+	printf("\nОпределитель исходной матрицы: %.*lf\n\n", eps, det);
+	
+	if(!det){
+		printf("Определитель исходной матрицы равен 0. Нахождение обратной матрицы невозможно");
+		int del_item = 0;
+		while(del_item < size){
+			free(matrix[del_item]);
+			del_item++;
+		}
+		free(matrix);
+		
+		return 1;
+	}
+
+	double** trMatrix = transportantMatrix(matrix, size);
+	printf("Транспонированная исходная матрица: \n");
+	showMatrixInConsole(trMatrix, size, eps);
+	
+	double** unMatrix = unionMatrix(trMatrix, size);
+	printf("Матрица составленная из алгебраических дополнений транспонированной исходной матрицы: \n");
+	showMatrixInConsole(unMatrix, size, eps);
+	
+	printf("\n\nОбратная матрица найденная методом алгебраических дополнений: \n");
+	matrixValueMultiplication(unMatrix, (1/det), size);
+	showMatrixInConsole(unMatrix, size, (eps == 0)? 5 : eps);
+	
+	double** multiMatrix = matrixMultiplication(matrix, unMatrix, size);
+	printf("\n\nПроверка произведения исходной матрицы на обратную(в произведении дают единичную матрицу): \n");
+	
+	int i = 0;
+	while(i < size){
+		int j = 0;
+		while(j < size){
+			multiMatrix[i][j] = (multiMatrix[i][j] == -0)? (-1)*multiMatrix[i][j] : multiMatrix[i][j];
+			j++;
+		}
+		i++;
+	}
+	showMatrixInConsole(multiMatrix, size, 0);
+	
+	int del_item = 0;
+	while(del_item < size){
+		free(matrix[del_item]);
+		free(trMatrix[del_item]);
+		free(unMatrix[del_item]);
+		free(multiMatrix[del_item]);
+		del_item++;
+	}
+	
+	free(matrix);
+	free(trMatrix);
+	free(unMatrix);
+	free(multiMatrix);
+	
+	system("PAUSE");
+	return 0;
+}
