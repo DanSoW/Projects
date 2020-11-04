@@ -1,0 +1,98 @@
+package com.example.myapplication;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+
+import android.app.Activity;
+import android.widget.TextView;
+
+public class MainActivity extends Activity {
+    private EditText coeff_a, coeff_b, coeff_c;
+    private TextView rootX1, rootX2;
+    private Button button;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        coeff_a = (EditText)findViewById(R.id.coefficient_a);
+        coeff_b = (EditText)findViewById(R.id.coefficient_b);
+        coeff_c = (EditText)findViewById(R.id.coefficient_c);
+        rootX1 = (TextView)findViewById(R.id.root1);
+        rootX2 = (TextView)findViewById(R.id.root2);
+        button = (Button)findViewById(R.id.buttonResult);
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                double a, b, c;
+                if(coeff_a.getText().toString().length() > 0)
+                    a = Double.parseDouble(coeff_a.getText().toString());
+                else
+                    a = 0;
+
+                if(coeff_b.getText().toString().length() > 0)
+                    b = Double.parseDouble(coeff_b.getText().toString());
+                else
+                    b = 0;
+
+                if(coeff_c.getText().toString().length() > 0)
+                    c = Double.parseDouble(coeff_c.getText().toString());
+                else
+                    c = 0;
+
+                double x1, x2;
+
+                if(a == 0){
+                    if((b == 0) && (c != 0)){
+                        rootX1.setText("NaN");
+                        rootX2.setText("NaN");
+                        return;
+                    }else if((b == 0) && (c == 0)){
+                        rootX1.setText("All x");
+                        rootX2.setText("All x");
+                        return;
+                    }
+
+                    x1 = x2 = (-c) / b;
+                    rootX1.setText(String.valueOf(x1));
+                    rootX2.setText(String.valueOf(x2));
+                }else if(b == 0){
+                    if(a == 0){
+                        rootX1.setText("NaN");
+                        rootX2.setText("NaN");
+                        return;
+                    }
+
+                    double valueRight = (-c) / a;
+                    if (valueRight < 0) {
+                        rootX1.setText("NaN");
+                        rootX2.setText("NaN");
+                        return;
+                    }
+
+                    x1 = Math.sqrt(valueRight);
+                    x2 = -Math.sqrt(valueRight);
+                    rootX1.setText(String.valueOf(x1));
+                    rootX2.setText(String.valueOf(x2));
+                }else{
+                    double d = (b * b) - (4 * a * c);
+                    if (d < 0) {
+                        rootX1.setText("NaN");
+                        rootX2.setText("NaN");
+                        return;
+                    }
+
+                    x1 = ((-b) - Math.sqrt(d)) / 2 * a;
+                    x2 = ((-b) + Math.sqrt(d)) / 2 * a;
+                    rootX1.setText(String.valueOf(x1));
+                    rootX2.setText(String.valueOf(x2));
+                }
+            }
+        });
+    }
+
+}
